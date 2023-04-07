@@ -6,7 +6,7 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.client.controller.GameController">
+<Pane fx:id="gameOwner" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.client.controller.GameController">
    <children>
       <VBox fx:id="scoreOwner" layoutX="552.0" layoutY="27.0" prefHeight="328.0" prefWidth="134.0" spacing="10.0" />
       <Rectangle fx:id="gameField" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="290.0" layoutX="14.0" layoutY="19.0" stroke="BLACK" strokeType="INSIDE" width="520.0" />
@@ -30,7 +30,6 @@
          </children>
       </HBox>
       <VBox fx:id="playersOwner" alignment="CENTER" fillWidth="false" layoutX="4.0" layoutY="-37.0" prefHeight="390.0" prefWidth="85.0" scaleX="0.7" scaleY="0.7" />
-      <Pane fx:id="projectileOwner" layoutX="95.0" layoutY="19.0" prefHeight="291.0" prefWidth="440.0" />
       <Pane fx:id="signUpPane" prefHeight="400.0" prefWidth="700.0">
          <children>
             <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="700.0" />

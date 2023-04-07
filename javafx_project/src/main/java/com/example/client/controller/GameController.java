@@ -22,6 +22,8 @@ import javafx.scene.shape.Rectangle;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class GameController {
@@ -36,7 +38,8 @@ public class GameController {
     @FXML
     private Pane signUpPane;
     @FXML
-    private Pane projectileOwner;
+    private Pane gameOwner;
+    private List<Line> projectileOwner = new ArrayList<>(4);
     @FXML
     private VBox playersOwner;
     @FXML
@@ -47,6 +50,8 @@ public class GameController {
     private DataOutputStream out;
     private DataInputStream in;
     private String name;
+    private double[] layouts = new double[4];
+    private boolean wasAdded = false;
 
     @FXML
     private void initialize() throws IOException {
@@ -55,18 +60,44 @@ public class GameController {
         in = new DataInputStream(socket.getInputStream());
     }
 
+    void setLayouts() {
+        switch (playersOwner.getChildren().size()) {
+            case 1 -> {
+                layouts[0] = 153;
+            }
+            case 2 -> {
+                layouts[0] = 123;
+                layouts[1] = 193;
+            }
+            case 3 -> {
+                layouts[0] = 87;
+                layouts[1] = 156;
+                layouts[2] = 227;
+            }
+            case 4 -> {
+                layouts[0] = 56;
+                layouts[1] = 126;
+                layouts[2] = 196;
+                layouts[3] = 263;
+            }
+        }
+    }
+
     @FXML
     protected void onStartButtonClick() throws InterruptedException, IOException {
-        for (int i = 0; i < playersOwner.getChildren().size(); i++) {
-            Line l = ShapesLoader.loadLine("projectile.fxml");
-            Polyline pl = (Polyline) playersOwner.getChildren().get(i);
-            l.setLayoutY(pl.getLayoutY() * pl.getScaleY());
-            l.setLayoutX(96.0);
-            l.setVisible(false);
-            projectileOwner.getChildren().add(l);
-            System.out.println("adding projectiles");
+        if (!wasAdded) {
+            setLayouts();
+            for (int i = 0; i < playersOwner.getChildren().size(); i++) {
+                Line l = ShapesLoader.loadLine("projectile.fxml");
+                Polyline pl = (Polyline) playersOwner.getChildren().get(i);
+                l.setLayoutY(layouts[i]);
+                l.setLayoutX(96.0);
+                l.setVisible(false);
+                projectileOwner.add(l);
+                gameOwner.getChildren().add(l);
+            }
+            wasAdded = true;
         }
-        System.out.println("end adding projectiles");
         out.writeUTF("start");
         out.flush();
     }
@@ -142,8 +173,8 @@ public class GameController {
                             targetBig.setLayoutY(update.targetYCoords.get(0));
                             targetSmall.setLayoutY(update.targetYCoords.get(1));
 
-                            for (int i = 0; i < 2; i++) {
-                                Line l = (Line) projectileOwner.getChildren().get(i);
+                            for (int i = 0; i < playersOwner.getChildren().size(); i++) {
+                                Line l = (Line) projectileOwner.get(i);
 
                                 HBox hBox = (HBox) scoreOwner.getChildren().get(i);
                                 Label shots = (Label) hBox.getChildren().get(1);

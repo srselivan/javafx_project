@@ -11,6 +11,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
@@ -23,8 +25,10 @@ public class Server {
     private final boolean[] shotsHandler = new boolean[4];
     private final int[] shotsCounter = new int[4];
     private final int[] scoreCounter = new int[4];
+    private double[] layouts = new double[4];
     private final PlayersList playersList = new PlayersList();
     private final ServerSocket srv;
+    private final AtomicBoolean isStopped = new AtomicBoolean(false);
 
     private AtomicInteger startConfirmCount = new AtomicInteger(0);
 
@@ -33,9 +37,32 @@ public class Server {
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
     }
+    void setLayouts() {
+        switch (clientSockets.size()) {
+            case 1 -> {
+                layouts[0] = 153;
+            }
+            case 2 -> {
+                layouts[0] = 123;
+                layouts[1] = 193;
+            }
+            case 3 -> {
+                layouts[0] = 87;
+                layouts[1] = 156;
+                layouts[2] = 227;
+            }
+            case 4 -> {
+                layouts[0] = 56;
+                layouts[1] = 126;
+                layouts[2] = 196;
+                layouts[3] = 263;
+            }
+        }
+    }
+
 
     public void start() throws IOException {
-        while (clientSockets.size() < 2) {
+        while (clientSockets.size() < 4 && startConfirmCount.get() == 0) {
             Socket socket = srv.accept();
             clientSockets.add(socket);
             Action action = new Action(Action.Actions.ADD_PLAYERS);
@@ -60,17 +87,19 @@ public class Server {
             listenSocket(num);
         }
 
-        while(startConfirmCount.get() < 2) {
-
-        }
-
         new Thread(()-> {
+            setLayouts();
             while (true) {
-                try {
-                    broadcast(new Action(Action.Actions.UPDATE));
-                    Thread.sleep(30);
-                } catch (IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
+                while (isStopped.get()) {
+
+                }
+                if (startConfirmCount.get() == clientSockets.size()) {
+                    try {
+                        broadcast(new Action(Action.Actions.UPDATE));
+                        Thread.sleep(30);
+                    } catch (IOException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }).start();
@@ -86,14 +115,22 @@ public class Server {
                     System.out.println(event);
                     switch (event) {
                         case "shot" -> {
-                            shotsHandler[num] = true;
-                            shotsCounter[num]++;
+                            if (!shotsHandler[num] && !isStopped.get()) {
+                                shotsHandler[num] = true;
+                                shotsCounter[num]++;
+                            }
                         }
                         case "stop" -> {
-                            //TODO: handle stop event
+                            if(!isStopped.get()) {
+                                isStopped.set(true);
+                                startConfirmCount.set(0);
+                            }
                         }
                         case "start" -> {
                             startConfirmCount.incrementAndGet();
+                            if (startConfirmCount.get() == clientSockets.size()) {
+                                isStopped.set(false);
+                            }
                         }
                     }
                 } catch (IOException e) {
@@ -124,27 +161,23 @@ public class Server {
             }
             case UPDATE -> {
                 Update update = new Update();
-                for (int i = 0; i < 2; i++) {
+                for (int i = 0; i < clientSockets.size(); i++) {
                     if (shotsHandler[i]){
-                        // 125 & 199
-                        for(var target : targets) {
-                            if (target.isInTarget(projectiles.get(i).x(), i == 1 ? 125 : 199)) {
-                                projectiles.get(i).rollback();
-                                shotsHandler[i] = false;
-                                scoreCounter[i]++;
-                                update.projectileXCoords.add(96.0);
-                            }
-                        }
                         if (!projectiles.get(i).isEnd()){
-                            update.projectileXCoords.add(projectiles.get(i).move());
+                            double x = projectiles.get(i).move();
+                            for(var target : targets) {
+                                if (target.isInTarget(x, layouts[i])) {
+                                    projectiles.get(i).rollback();
+                                    shotsHandler[i] = false;
+                                    scoreCounter[i]++;
+                                }
+                            }
                         } else {
                             projectiles.get(i).rollback();
                             shotsHandler[i] = false;
-                            update.projectileXCoords.add(96.0);
                         }
-                    } else {
-                        update.projectileXCoords.add(96.0);
                     }
+                    update.projectileXCoords.add(projectiles.get(i).x());
                     update.shotsList().add(shotsCounter[i]);
                     update.scoreList().add(scoreCounter[i]);
 

@@ -22,7 +22,7 @@ public class Projectile {
     }
 
     public boolean isEnd() {
-        return x + step >= endX;
+        return x + step + width >= endX;
     }
 
     public double x() {
