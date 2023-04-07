@@ -3,7 +3,6 @@ package com.example.client.controller;
 import com.example.client.entity.Action;
 import com.example.client.entity.PlayersList;
 import com.example.client.entity.Update;
-import com.example.client.service.Border;
 import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
@@ -16,7 +15,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
-import javafx.scene.shape.Rectangle;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -31,8 +29,6 @@ public class GameController {
     private Circle targetBig;
     @FXML
     private Circle targetSmall;
-    @FXML
-    private Rectangle gameField;
     @FXML
     private TextField nameInput;
     @FXML
@@ -124,9 +120,6 @@ public class GameController {
 
     @FXML
     protected void onSaveButtonClick() throws IOException {
-        Border border = new Border(gameField);
-        System.out.println(border.top() + " " + border.bottom());
-
         name = nameInput.getText();
         out.writeUTF(name);
         out.flush();
@@ -188,7 +181,7 @@ public class GameController {
                             targetSmall.setLayoutY(update.targetYCoords.get(1));
 
                             for (int i = 0; i < playersOwner.getChildren().size(); i++) {
-                                Line l = (Line) projectileOwner.get(i);
+                                Line l = projectileOwner.get(i);
 
                                 HBox hBox = (HBox) scoreOwner.getChildren().get(i);
                                 Label shots = (Label) hBox.getChildren().get(1);

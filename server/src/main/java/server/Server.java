@@ -9,13 +9,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
 public class Server {
     private static final int port = 8080;
     private final List<Socket> clientSockets = new ArrayList<>(4);
@@ -31,8 +28,9 @@ public class Server {
     private final ServerSocket srv;
     private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
+    private final AtomicBoolean stopAccept = new AtomicBoolean(false);
 
-    private AtomicInteger startConfirmCount = new AtomicInteger(0);
+    private final AtomicInteger startConfirmCount = new AtomicInteger(0);
 
     public Server() throws IOException {
         srv = new ServerSocket(port);
@@ -62,31 +60,45 @@ public class Server {
         }
     }
 
-    public void start() throws IOException {
-        while (clientSockets.size() < 4 && startConfirmCount.get() == 0) {
-            Socket socket = srv.accept();
-            clientSockets.add(socket);
-            Action action = new Action(Action.Actions.ADD_PLAYERS);
+    public void start() throws InterruptedException {
+        Thread acceptConn = new Thread(() -> {
+            while (clientSockets.size() < 4) {
+                try {
+                    Socket socket = srv.accept();
+                    if (stopAccept.get()) {
+                        break;
+                    }
+                    clientSockets.add(socket);
+                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                    DataInputStream in = new DataInputStream(socket.getInputStream());
+                    clientSocketsIn.add(in);
+                    clientSocketsOut.add(out);
+                    projectiles.add(new Projectile(535));
 
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            clientSocketsIn.add(in);
-            clientSocketsOut.add(out);
-            projectiles.add(new Projectile(535));
+                    Action action = new Action(Action.Actions.ADD_PLAYERS);
+                    out.writeUTF(new Gson().toJson(action));
+                    out.flush();
 
-            out.writeUTF(new Gson().toJson(action));
-            out.flush();
+                    out.writeUTF(new Gson().toJson(playersList));
+                    out.flush();
 
-            out.writeUTF(new Gson().toJson(playersList));
-            out.flush();
+                    String name = in.readUTF();
+                    playersList.players().add(name);
 
-            String name = in.readUTF();
-            playersList.players().add(name);
+                    broadcast(action);
+                    int num = clientSockets.size() - 1;
+                    listenSocket(num);
+                } catch (IOException ignored) {
+                }
+            }
+        });
 
-            broadcast(action);
-            int num = clientSockets.size() - 1;
-            listenSocket(num);
+        acceptConn.start();
+
+        while (startConfirmCount.get() != clientSockets.size() || startConfirmCount.get() == 0) {
         }
+        acceptConn.interrupt();
+        stopAccept.set(true);
 
         new Thread(()-> {
             setLayouts();
@@ -158,6 +170,7 @@ public class Server {
                         }
                         case "start" -> {
                             startConfirmCount.incrementAndGet();
+                            System.out.println(startConfirmCount.get() + " " + clientSockets.size());
                             if (startConfirmCount.get() == clientSockets.size()) {
                                 isStopped.set(false);
                             }
@@ -217,8 +230,6 @@ public class Server {
                     update.projectileXCoords.add(projectiles.get(i).x());
                     update.shotsList().add(shotsCounter[i]);
                     update.scoreList().add(scoreCounter[i]);
-
-                    System.out.println(scoreCounter[i] + " " + shotsCounter[i]);
                 }
 
                 for(var target : targets) {
