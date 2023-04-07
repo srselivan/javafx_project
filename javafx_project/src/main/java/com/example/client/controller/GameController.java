@@ -115,7 +115,7 @@ public class GameController {
     }
 
     @FXML
-    protected void onSaveButtonClick() throws IOException {
+    protected void onEnterButtonClick() throws IOException {
         Border border = new Border(gameField);
         System.out.println(border.top() + " " + border.bottom());
 

@@ -141,7 +141,6 @@ public class Server {
     }
 
     private void broadcast(Action action) throws IOException {
-
         switch (action.action()) {
             case ADD_PLAYERS -> {
                 for(var out : clientSocketsOut) {
