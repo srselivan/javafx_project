@@ -165,9 +165,6 @@ public class GameController {
                                 clientPlayerAdded = true;
                             }
                         }
-                        case STOP_GAME -> {
-                            //TODO: stop game
-                        }
                         case UPDATE -> {
                             Update update = new Gson().fromJson(in.readUTF(), Update.class);
                             targetBig.setLayoutY(update.targetYCoords.get(0));
@@ -195,7 +192,6 @@ public class GameController {
                         }
                     }
                 } catch (IOException ignored) {
-                    //TODO: logging errors
                 }
             }
         }).start();
