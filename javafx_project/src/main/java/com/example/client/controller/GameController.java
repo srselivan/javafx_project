@@ -1,15 +1,13 @@
 package com.example.client.controller;
 
-import com.example.client.Application;
 import com.example.client.entity.Action;
 import com.example.client.entity.PlayersList;
 import com.example.client.entity.Update;
-import com.example.client.service.*;
+import com.example.client.service.Border;
+import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -20,7 +18,9 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +123,7 @@ public class GameController {
         out.writeUTF(name);
         out.flush();
 
-        new Thread(()->{
+        new Thread(() -> {
             boolean clientPlayerAdded = false;
             while (true) {
                 try {

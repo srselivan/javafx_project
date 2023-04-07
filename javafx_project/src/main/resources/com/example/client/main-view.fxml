@@ -1,46 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
-
-<Pane fx:id="gameOwner" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.client.controller.GameController">
-   <children>
-      <VBox fx:id="scoreOwner" layoutX="552.0" layoutY="27.0" prefHeight="328.0" prefWidth="134.0" spacing="10.0" />
-      <Rectangle fx:id="gameField" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="290.0" layoutX="14.0" layoutY="19.0" stroke="BLACK" strokeType="INSIDE" width="520.0" />
-      <Circle fx:id="targetBig" fill="DODGERBLUE" layoutX="446.0" layoutY="155.0" radius="20.0" stroke="BLACK" strokeType="INSIDE" />
-      <Circle fx:id="targetSmall" fill="DODGERBLUE" layoutX="500.0" layoutY="155.0" radius="10.0" stroke="BLACK" strokeType="INSIDE" />
-      <Line endX="100.0" layoutX="-6.0" layoutY="18.0" startX="100.0" startY="290.0" />
-      <HBox layoutX="14.0" layoutY="324.0" prefHeight="56.0" prefWidth="381.0">
-         <children>
-            <Button fx:id="startButton" focusTraversable="false" mnemonicParsing="false" onAction="#onStartButtonClick" prefHeight="26.0" prefWidth="70.0" text="Start">
-               <HBox.margin>
-                  <Insets />
-               </HBox.margin></Button>
-            <Button fx:id="stopButton" focusTraversable="false" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onStopButtonClick" prefHeight="26.0" prefWidth="70.0" text="Stop">
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin></Button>
-            <Button fx:id="shotButton" focusTraversable="false" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onShotButtonClick" prefHeight="26.0" prefWidth="70.0" text="Shot">
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin></Button>
-         </children>
-      </HBox>
-      <VBox fx:id="playersOwner" alignment="CENTER" fillWidth="false" layoutX="4.0" layoutY="-37.0" prefHeight="390.0" prefWidth="85.0" scaleX="0.7" scaleY="0.7" />
-      <Pane fx:id="signUpPane" prefHeight="400.0" prefWidth="700.0">
-         <children>
-            <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="700.0" />
-            <Button layoutX="315.0" layoutY="164.0" mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="36.0" prefWidth="70.0" text="Save" />
-            <Label alignment="CENTER" layoutX="277.0" layoutY="53.0" text="Input name">
-               <font>
-                  <Font size="29.0" />
-               </font>
-            </Label>
-            <TextField fx:id="nameInput" layoutX="241.0" layoutY="113.0" prefHeight="25.0" prefWidth="218.0" promptText="Name" />
-         </children>
-      </Pane>
-   </children>
+<?import javafx.scene.text.Font?>
+<Pane xmlns:fx="http://javafx.com/fxml/1" fx:id="gameOwner" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+      minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0"
+      xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.example.client.controller.GameController">
+    <children>
+        <VBox fx:id="scoreOwner" layoutX="552.0" layoutY="27.0" prefHeight="328.0" prefWidth="134.0" spacing="10.0"/>
+        <Rectangle fx:id="gameField" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="290.0" layoutX="14.0"
+                   layoutY="19.0" stroke="BLACK" strokeType="INSIDE" width="520.0"/>
+        <Circle fx:id="targetBig" fill="DODGERBLUE" layoutX="446.0" layoutY="155.0" radius="20.0" stroke="BLACK"
+                strokeType="INSIDE"/>
+        <Circle fx:id="targetSmall" fill="DODGERBLUE" layoutX="500.0" layoutY="155.0" radius="10.0" stroke="BLACK"
+                strokeType="INSIDE"/>
+        <Line endX="100.0" layoutX="-6.0" layoutY="18.0" startX="100.0" startY="290.0"/>
+        <HBox layoutX="14.0" layoutY="324.0" prefHeight="56.0" prefWidth="381.0">
+            <children>
+                <Button fx:id="startButton" focusTraversable="false" mnemonicParsing="false"
+                        onAction="#onStartButtonClick" prefHeight="26.0" prefWidth="70.0" text="Start">
+                    <HBox.margin>
+                        <Insets/>
+                    </HBox.margin>
+                </Button>
+                <Button fx:id="stopButton" focusTraversable="false" layoutX="10.0" layoutY="10.0"
+                        mnemonicParsing="false" onAction="#onStopButtonClick" prefHeight="26.0" prefWidth="70.0"
+                        text="Stop">
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </Button>
+                <Button fx:id="shotButton" focusTraversable="false" layoutX="10.0" layoutY="10.0"
+                        mnemonicParsing="false" onAction="#onShotButtonClick" prefHeight="26.0" prefWidth="70.0"
+                        text="Shot">
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </Button>
+            </children>
+        </HBox>
+        <VBox fx:id="playersOwner" alignment="CENTER" fillWidth="false" layoutX="4.0" layoutY="-37.0" prefHeight="390.0"
+              prefWidth="85.0" scaleX="0.7" scaleY="0.7"/>
+        <Pane fx:id="signUpPane" prefHeight="400.0" prefWidth="700.0">
+            <children>
+                <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" stroke="BLACK" strokeType="INSIDE"
+                           strokeWidth="0.0" width="700.0"/>
+                <Button layoutX="315.0" layoutY="164.0" mnemonicParsing="false" onAction="#onSaveButtonClick"
+                        prefHeight="36.0" prefWidth="70.0" text="Save"/>
+                <Label alignment="CENTER" layoutX="277.0" layoutY="53.0" text="Input name">
+                    <font>
+                        <Font size="29.0"/>
+                    </font>
+                </Label>
+                <TextField fx:id="nameInput" layoutX="241.0" layoutY="113.0" prefHeight="25.0" prefWidth="218.0"
+                           promptText="Name"/>
+            </children>
+        </Pane>
+    </children>
 </Pane>

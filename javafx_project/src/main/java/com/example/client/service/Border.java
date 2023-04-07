@@ -1,6 +1,5 @@
 package com.example.client.service;
 
-import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
 public class Border {
@@ -9,7 +8,7 @@ public class Border {
     private final double right;
     private final double left;
 
-    public  Border(Rectangle rectangle) {
+    public Border(Rectangle rectangle) {
         top = rectangle.getLayoutY();
         bottom = top + rectangle.getHeight();
         left = rectangle.getLayoutX();
