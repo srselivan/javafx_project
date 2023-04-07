@@ -38,6 +38,10 @@ public class GameController {
     @FXML
     private Pane signUpPane;
     @FXML
+    private Pane winnerPane;
+    @FXML
+    private Label winnerLabel;
+    @FXML
     private Pane gameOwner;
     private List<Line> projectileOwner = new ArrayList<>(4);
     @FXML
@@ -89,7 +93,6 @@ public class GameController {
             setLayouts();
             for (int i = 0; i < playersOwner.getChildren().size(); i++) {
                 Line l = ShapesLoader.loadLine("projectile.fxml");
-                Polyline pl = (Polyline) playersOwner.getChildren().get(i);
                 l.setLayoutY(layouts[i]);
                 l.setLayoutX(96.0);
                 l.setVisible(false);
@@ -106,6 +109,11 @@ public class GameController {
     protected void onStopButtonClick() throws IOException {
         out.writeUTF("stop");
         out.flush();
+    }
+
+    @FXML
+    protected void onOkButtonClick() throws IOException {
+        winnerPane.setVisible(false);
     }
 
     @FXML
@@ -164,6 +172,15 @@ public class GameController {
                                 );
                                 clientPlayerAdded = true;
                             }
+                        }
+                        case END_GAME -> {
+                            String winner = in.readUTF();
+                            Platform.runLater(
+                                    () -> {
+                                        winnerLabel.setText(winner);
+                                        winnerPane.setVisible(true);
+                                    }
+                            );
                         }
                         case UPDATE -> {
                             Update update = new Gson().fromJson(in.readUTF(), Update.class);

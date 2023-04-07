@@ -4,7 +4,7 @@ public class Action {
     public enum Actions {
         ADD_PLAYERS,
         UPDATE,
-        STOP_GAME
+        END_GAME,
     }
 
     public Actions action;

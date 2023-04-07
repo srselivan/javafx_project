@@ -3,6 +3,7 @@ package com.example.client.entity;
 public class Action {
     public enum Actions {
         ADD_PLAYERS,
+        END_GAME,
         UPDATE,
     }
 

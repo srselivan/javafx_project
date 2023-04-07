@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,13 +22,14 @@ public class Server {
     private final List<DataInputStream> clientSocketsIn = new ArrayList<>(4);
     private final List<DataOutputStream> clientSocketsOut = new ArrayList<>(4);
     private final List<Projectile> projectiles = new ArrayList<>(4);
-    private final List<Target> targets = new ArrayList<>(4);
+    private final List<Target> targets = new ArrayList<>(2);
     private final boolean[] shotsHandler = new boolean[4];
     private final int[] shotsCounter = new int[4];
     private final int[] scoreCounter = new int[4];
-    private double[] layouts = new double[4];
+    private final double[] layouts = new double[4];
     private final PlayersList playersList = new PlayersList();
     private final ServerSocket srv;
+    private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
 
     private AtomicInteger startConfirmCount = new AtomicInteger(0);
@@ -60,7 +62,6 @@ public class Server {
         }
     }
 
-
     public void start() throws IOException {
         while (clientSockets.size() < 4 && startConfirmCount.get() == 0) {
             Socket socket = srv.accept();
@@ -91,10 +92,17 @@ public class Server {
             setLayouts();
             while (true) {
                 while (isStopped.get()) {
-
                 }
                 if (startConfirmCount.get() == clientSockets.size()) {
                     try {
+                        if (!Objects.equals(getWinner(), "")) {
+                            resetData();
+                            broadcast(new Action(Action.Actions.UPDATE));
+                            broadcast(new Action(Action.Actions.END_GAME));
+                            isStopped.set(true);
+                            startConfirmCount.set(0);
+                            continue;
+                        }
                         broadcast(new Action(Action.Actions.UPDATE));
                         Thread.sleep(30);
                     } catch (IOException | InterruptedException e) {
@@ -103,6 +111,28 @@ public class Server {
                 }
             }
         }).start();
+    }
+
+    private String getWinner() {
+        for (int i = 0; i < 4; i++) {
+            if (scoreCounter[i] >= 3) {
+                winner = playersList.players().get(i);
+            }
+        }
+        return winner;
+    }
+
+    private void resetData() {
+        for (int i = 0; i < 4; i++) {
+            scoreCounter[i] = 0;
+            shotsCounter[i] = 0;
+            shotsHandler[i] = false;
+        }
+        targets.set(0, new Target(5, 20, 446));
+        targets.set(1, new Target(10, 10, 500));
+        for(var projectile : projectiles) {
+            projectile.rollback();
+        }
     }
 
     private void listenSocket(int num) {
@@ -155,8 +185,15 @@ public class Server {
                     out.flush();
                 }
             }
-            case STOP_GAME -> {
-                //TODO: stop game
+            case END_GAME -> {
+                for(var out : clientSocketsOut) {
+                    out.writeUTF(new Gson().toJson(action));
+                    out.flush();
+
+                    out.writeUTF(new Gson().toJson(winner));
+                    out.flush();
+                }
+                winner = "";
             }
             case UPDATE -> {
                 Update update = new Update();

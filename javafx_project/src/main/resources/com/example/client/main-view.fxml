@@ -35,15 +35,29 @@
         <VBox fx:id="playersOwner" alignment="CENTER" fillWidth="false" layoutX="4.0" layoutY="-37.0" prefHeight="390.0" prefWidth="85.0" scaleX="0.7" scaleY="0.7" />
         <Pane fx:id="signUpPane" prefHeight="400.0" prefWidth="700.0">
             <children>
-                <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" layoutX="-50.0" layoutY="-7.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="700.0" />
-                <Button layoutX="326.0" layoutY="234.0" mnemonicParsing="false" onAction="#onEnterButtonClick" prefHeight="36.0" prefWidth="70.0" text="Войти" />
-                <Label alignment="CENTER" layoutX="240.0" layoutY="53.0" prefHeight="40.0" prefWidth="241.0" text="Введите свое имя">
+                <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="700.0" />
+                <Button layoutX="315.0" layoutY="164.0" mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="36.0" prefWidth="70.0" text="Save" />
+                <Label alignment="CENTER" layoutX="277.0" layoutY="53.0" text="Input name">
                     <font>
                         <Font size="29.0" />
                     </font>
                 </Label>
-                <TextField fx:id="nameInput" layoutX="226.0" layoutY="104.0" prefHeight="96.0" prefWidth="269.0" promptText="Имя" />
+                <TextField fx:id="nameInput" layoutX="241.0" layoutY="113.0" prefHeight="25.0" prefWidth="218.0" promptText="Name" />
             </children>
         </Pane>
+      <Pane fx:id="winnerPane" prefHeight="400.0" prefWidth="700.0" visible="false">
+         <children>
+            <Rectangle arcHeight="5.0" arcWidth="5.0" fill="WHITE" height="400.0" layoutY="9.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="700.0" />
+            <Label layoutX="291.0" layoutY="56.0" text="WINNER">
+               <font>
+                  <Font size="31.0" />
+               </font></Label>
+            <Label fx:id="winnerLabel" layoutX="291.0" layoutY="118.0">
+               <font>
+                  <Font size="31.0" />
+               </font>
+            </Label>
+            <Button layoutX="324.0" layoutY="290.0" mnemonicParsing="false" onAction="#onOkButtonClick" text="Ok" />
+         </children></Pane>
     </children>
 </Pane>
