@@ -133,15 +133,10 @@ public class GameController {
                         case ADD_PLAYERS -> {
                             String data = in.readUTF();
                             PlayersList list = new Gson().fromJson(data, PlayersList.class);
-                            if (!list.players().isEmpty()) {
-                                if (Objects.equals(list.players().get(0), name)) {
-                                    break;
-                                }
-                            }
-                            for (var player : list.players()) {
+                            for (int i = 0; i < list.players().size() - 1; i++) {
                                 HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
                                 Label label = (Label) hBox.getChildren().get(0);
-                                label.setText(player);
+                                label.setText(list.players().get(i));
                                 Platform.runLater(
                                         () -> scoreOwner.getChildren().add(hBox)
                                 );
@@ -151,20 +146,32 @@ public class GameController {
                                         () -> playersOwner.getChildren().add(pl)
                                 );
                             }
-                            if (!clientPlayerAdded) {
-                                HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
-                                Label label = (Label) hBox.getChildren().get(0);
-                                label.setText(name);
-                                Platform.runLater(
-                                        () -> scoreOwner.getChildren().add(hBox)
-                                );
+                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+                            Label label = (Label) hBox.getChildren().get(0);
+                            label.setText(list.players().get(list.players().size() - 1));
+                            Platform.runLater(
+                                    () -> scoreOwner.getChildren().add(hBox)
+                            );
 
-                                Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
-                                Platform.runLater(
-                                        () -> playersOwner.getChildren().add(pl)
-                                );
-                                clientPlayerAdded = true;
-                            }
+                            Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
+                            Platform.runLater(
+                                    () -> playersOwner.getChildren().add(pl)
+                            );
+                        }
+                        case ADD_PLAYER -> {
+                            String data = in.readUTF();
+                            PlayersList list = new Gson().fromJson(data, PlayersList.class);
+                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+                            Label label = (Label) hBox.getChildren().get(0);
+                            label.setText(list.players().get(0));
+                            Platform.runLater(
+                                    () -> scoreOwner.getChildren().add(hBox)
+                            );
+
+                            Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+                            Platform.runLater(
+                                    () -> playersOwner.getChildren().add(pl)
+                            );
                         }
                         case END_GAME -> {
                             String winner = in.readUTF();

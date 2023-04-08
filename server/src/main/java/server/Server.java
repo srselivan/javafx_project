@@ -29,7 +29,6 @@ public class Server {
     private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final AtomicBoolean stopAccept = new AtomicBoolean(false);
-
     private final AtomicInteger startConfirmCount = new AtomicInteger(0);
 
     public Server() throws IOException {
@@ -37,6 +36,7 @@ public class Server {
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
     }
+
     void setLayouts() {
         switch (clientSockets.size()) {
             case 1 -> {
@@ -75,17 +75,16 @@ public class Server {
                     clientSocketsOut.add(out);
                     projectiles.add(new Projectile(535));
 
-                    Action action = new Action(Action.Actions.ADD_PLAYERS);
-                    out.writeUTF(new Gson().toJson(action));
+                    String name = in.readUTF();
+                    playersList.players().add(validateName(name));
+
+                    out.writeUTF(new Gson().toJson(new Action(Action.Actions.ADD_PLAYERS)));
                     out.flush();
 
                     out.writeUTF(new Gson().toJson(playersList));
                     out.flush();
 
-                    String name = in.readUTF();
-                    playersList.players().add(name);
-
-                    broadcast(action);
+                    broadcast(new Action(Action.Actions.ADD_PLAYER));
                     int num = clientSockets.size() - 1;
                     listenSocket(num);
                 } catch (IOException ignored) {
@@ -123,6 +122,18 @@ public class Server {
                 }
             }
         }).start();
+    }
+
+    private String validateName(String name) {
+        String tmp = name;
+        int counter = 0;
+        while (true) {
+            if (playersList.players().contains(tmp)) {
+                tmp += Integer.toString(counter++);
+            } else {
+                return tmp;
+            }
+        }
     }
 
     private String getWinner() {
@@ -170,7 +181,6 @@ public class Server {
                         }
                         case "start" -> {
                             startConfirmCount.incrementAndGet();
-                            System.out.println(startConfirmCount.get() + " " + clientSockets.size());
                             if (startConfirmCount.get() == clientSockets.size()) {
                                 isStopped.set(false);
                             }
@@ -186,17 +196,17 @@ public class Server {
     private void broadcast(Action action) throws IOException {
 
         switch (action.action()) {
-            case ADD_PLAYERS -> {
-                for(var out : clientSocketsOut) {
+            case ADD_PLAYER -> {
+                for (int i = 0; i < clientSocketsOut.size() - 1 ; i++) {
                     int size = playersList.players().size();
                     PlayersList temp = new PlayersList();
                     temp.players().add(playersList.players().get(size - 1));
 
-                    out.writeUTF(new Gson().toJson(action));
-                    out.flush();
+                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(action));
+                    clientSocketsOut.get(i).flush();
 
-                    out.writeUTF(new Gson().toJson(temp));
-                    out.flush();
+                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(temp));
+                    clientSocketsOut.get(i).flush();
                 }
             }
             case END_GAME -> {
