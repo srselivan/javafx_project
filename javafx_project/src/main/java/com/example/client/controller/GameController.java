@@ -119,7 +119,7 @@ public class GameController {
     }
 
     @FXML
-    protected void onSaveButtonClick() throws IOException {
+    protected void onEnterButtonClick() throws IOException {
         name = nameInput.getText();
         out.writeUTF(name);
         out.flush();
