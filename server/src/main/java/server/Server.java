@@ -9,13 +9,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
 public class Server {
     private static final int port = 8080;
     private final List<Socket> clientSockets = new ArrayList<>(4);
@@ -31,14 +28,15 @@ public class Server {
     private final ServerSocket srv;
     private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-
-    private AtomicInteger startConfirmCount = new AtomicInteger(0);
+    private final AtomicBoolean stopAccept = new AtomicBoolean(false);
+    private final AtomicInteger startConfirmCount = new AtomicInteger(0);
 
     public Server() throws IOException {
         srv = new ServerSocket(port);
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
     }
+
     void setLayouts() {
         switch (clientSockets.size()) {
             case 1 -> {
@@ -62,31 +60,44 @@ public class Server {
         }
     }
 
-    public void start() throws IOException {
-        while (clientSockets.size() < 4 && startConfirmCount.get() == 0) {
-            Socket socket = srv.accept();
-            clientSockets.add(socket);
-            Action action = new Action(Action.Actions.ADD_PLAYERS);
+    public void start() throws InterruptedException {
+        Thread acceptConn = new Thread(() -> {
+            while (clientSockets.size() < 4) {
+                try {
+                    Socket socket = srv.accept();
+                    if (stopAccept.get()) {
+                        break;
+                    }
+                    clientSockets.add(socket);
+                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                    DataInputStream in = new DataInputStream(socket.getInputStream());
+                    clientSocketsIn.add(in);
+                    clientSocketsOut.add(out);
+                    projectiles.add(new Projectile(535));
 
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            clientSocketsIn.add(in);
-            clientSocketsOut.add(out);
-            projectiles.add(new Projectile(535));
+                    String name = in.readUTF();
+                    playersList.players().add(validateName(name));
 
-            out.writeUTF(new Gson().toJson(action));
-            out.flush();
+                    out.writeUTF(new Gson().toJson(new Action(Action.Actions.ADD_PLAYERS)));
+                    out.flush();
 
-            out.writeUTF(new Gson().toJson(playersList));
-            out.flush();
+                    out.writeUTF(new Gson().toJson(playersList));
+                    out.flush();
 
-            String name = in.readUTF();
-            playersList.players().add(name);
+                    broadcast(new Action(Action.Actions.ADD_PLAYER));
+                    int num = clientSockets.size() - 1;
+                    listenSocket(num);
+                } catch (IOException ignored) {
+                }
+            }
+        });
 
-            broadcast(action);
-            int num = clientSockets.size() - 1;
-            listenSocket(num);
+        acceptConn.start();
+
+        while (startConfirmCount.get() != clientSockets.size() || startConfirmCount.get() == 0) {
         }
+        acceptConn.interrupt();
+        stopAccept.set(true);
 
         new Thread(()-> {
             setLayouts();
@@ -111,6 +122,18 @@ public class Server {
                 }
             }
         }).start();
+    }
+
+    private String validateName(String name) {
+        String tmp = name;
+        int counter = 0;
+        while (true) {
+            if (playersList.players().contains(tmp)) {
+                tmp += Integer.toString(counter++);
+            } else {
+                return tmp;
+            }
+        }
     }
 
     private String getWinner() {
@@ -172,17 +195,17 @@ public class Server {
 
     private void broadcast(Action action) throws IOException {
         switch (action.action()) {
-            case ADD_PLAYERS -> {
-                for(var out : clientSocketsOut) {
+            case ADD_PLAYER -> {
+                for (int i = 0; i < clientSocketsOut.size() - 1 ; i++) {
                     int size = playersList.players().size();
                     PlayersList temp = new PlayersList();
                     temp.players().add(playersList.players().get(size - 1));
 
-                    out.writeUTF(new Gson().toJson(action));
-                    out.flush();
+                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(action));
+                    clientSocketsOut.get(i).flush();
 
-                    out.writeUTF(new Gson().toJson(temp));
-                    out.flush();
+                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(temp));
+                    clientSocketsOut.get(i).flush();
                 }
             }
             case END_GAME -> {
@@ -216,8 +239,6 @@ public class Server {
                     update.projectileXCoords.add(projectiles.get(i).x());
                     update.shotsList().add(shotsCounter[i]);
                     update.scoreList().add(scoreCounter[i]);
-
-                    System.out.println(scoreCounter[i] + " " + shotsCounter[i]);
                 }
 
                 for(var target : targets) {

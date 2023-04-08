@@ -3,7 +3,6 @@ package com.example.client.controller;
 import com.example.client.entity.Action;
 import com.example.client.entity.PlayersList;
 import com.example.client.entity.Update;
-import com.example.client.service.Border;
 import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
@@ -16,7 +15,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
-import javafx.scene.shape.Rectangle;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -31,8 +29,6 @@ public class GameController {
     private Circle targetBig;
     @FXML
     private Circle targetSmall;
-    @FXML
-    private Rectangle gameField;
     @FXML
     private TextField nameInput;
     @FXML
@@ -123,10 +119,7 @@ public class GameController {
     }
 
     @FXML
-    protected void onEnterButtonClick() throws IOException {
-        Border border = new Border(gameField);
-        System.out.println(border.top() + " " + border.bottom());
-
+    protected void onSaveButtonClick() throws IOException {
         name = nameInput.getText();
         out.writeUTF(name);
         out.flush();
@@ -140,15 +133,10 @@ public class GameController {
                         case ADD_PLAYERS -> {
                             String data = in.readUTF();
                             PlayersList list = new Gson().fromJson(data, PlayersList.class);
-                            if (!list.players().isEmpty()) {
-                                if (Objects.equals(list.players().get(0), name)) {
-                                    break;
-                                }
-                            }
-                            for (var player : list.players()) {
+                            for (int i = 0; i < list.players().size() - 1; i++) {
                                 HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
                                 Label label = (Label) hBox.getChildren().get(0);
-                                label.setText(player);
+                                label.setText(list.players().get(i));
                                 Platform.runLater(
                                         () -> scoreOwner.getChildren().add(hBox)
                                 );
@@ -158,20 +146,32 @@ public class GameController {
                                         () -> playersOwner.getChildren().add(pl)
                                 );
                             }
-                            if (!clientPlayerAdded) {
-                                HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
-                                Label label = (Label) hBox.getChildren().get(0);
-                                label.setText(name);
-                                Platform.runLater(
-                                        () -> scoreOwner.getChildren().add(hBox)
-                                );
+                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+                            Label label = (Label) hBox.getChildren().get(0);
+                            label.setText(list.players().get(list.players().size() - 1));
+                            Platform.runLater(
+                                    () -> scoreOwner.getChildren().add(hBox)
+                            );
 
-                                Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
-                                Platform.runLater(
-                                        () -> playersOwner.getChildren().add(pl)
-                                );
-                                clientPlayerAdded = true;
-                            }
+                            Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
+                            Platform.runLater(
+                                    () -> playersOwner.getChildren().add(pl)
+                            );
+                        }
+                        case ADD_PLAYER -> {
+                            String data = in.readUTF();
+                            PlayersList list = new Gson().fromJson(data, PlayersList.class);
+                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+                            Label label = (Label) hBox.getChildren().get(0);
+                            label.setText(list.players().get(0));
+                            Platform.runLater(
+                                    () -> scoreOwner.getChildren().add(hBox)
+                            );
+
+                            Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+                            Platform.runLater(
+                                    () -> playersOwner.getChildren().add(pl)
+                            );
                         }
                         case END_GAME -> {
                             String winner = in.readUTF();
@@ -188,7 +188,7 @@ public class GameController {
                             targetSmall.setLayoutY(update.targetYCoords.get(1));
 
                             for (int i = 0; i < playersOwner.getChildren().size(); i++) {
-                                Line l = (Line) projectileOwner.get(i);
+                                Line l = projectileOwner.get(i);
 
                                 HBox hBox = (HBox) scoreOwner.getChildren().get(i);
                                 Label shots = (Label) hBox.getChildren().get(1);
