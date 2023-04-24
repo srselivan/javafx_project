@@ -1,14 +1,18 @@
 package com.example.client.controller;
 
 import com.example.client.entity.Action;
+import com.example.client.entity.Player;
 import com.example.client.entity.PlayersList;
 import com.example.client.entity.Update;
 import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -44,13 +48,21 @@ public class GameController {
     private VBox playersOwner;
     @FXML
     private VBox scoreOwner;
+    @FXML
+    private Pane leadersPane;
+    @FXML
+    private TableView<Player> leadersTable;
+    @FXML
+    private TableColumn<Player, String> nameColumn;
+    @FXML
+    private TableColumn<Player, Integer> winsColumn;
     private final String host = "localhost";
     private final int port = 8080;
     private Socket socket;
     private DataOutputStream out;
     private DataInputStream in;
     private String name;
-    private double[] layouts = new double[4];
+    private final double[] layouts = new double[4];
     private boolean wasAdded = false;
 
     @FXML
@@ -58,6 +70,31 @@ public class GameController {
         socket = new Socket(host, port);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
+
+//        PlayersList playersList = new PlayersList();
+//        playersList.players = new ArrayList<>();
+//        playersList.wins = new ArrayList<>();
+//        playersList.players().add("aaa");
+//        playersList.players().add("aaa1");
+//        playersList.players().add("aaa2");
+//        playersList.players().add("aaa3");
+//        playersList.wins.add(1);
+//        playersList.wins.add(2);
+//        playersList.wins.add(3);
+//        playersList.wins.add(4);
+//
+//        ObservableList<Player> people = FXCollections.observableArrayList();
+//
+//        for (int i = 0; i < playersList.players().size(); i++) {
+//            people.add(new Player(
+//                    playersList.players().get(i).toString(),
+//                    playersList.wins().get(i)
+//            ));
+//        }
+//
+//        nameColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().name()));
+//        winsColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().winCount()));
+//        leadersTable.setItems(people);
     }
 
     void setLayouts() {
@@ -207,6 +244,23 @@ public class GameController {
 
                             }
                         }
+                        case WINNERS -> {
+                            String data = in.readUTF();
+                            PlayersList playersList = new Gson().fromJson(data, PlayersList.class);
+                            ObservableList<Player> observableList = FXCollections.observableArrayList();
+
+                            for (int i = 0; i < playersList.players().size(); i++) {
+                                observableList.add(new Player(
+                                        playersList.players().get(i).toString(),
+                                        playersList.wins().get(i)
+                                ));
+                            }
+
+                            nameColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().name()));
+                            winsColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().winCount()));
+                            leadersTable.setItems(observableList);
+                            leadersPane.setVisible(true);
+                        }
                     }
                 } catch (IOException ignored) {
                 }
@@ -214,5 +268,16 @@ public class GameController {
         }).start();
 
         signUpPane.setVisible(false);
+    }
+
+    @FXML
+    protected void onCloseLeadersButtonClick() {
+        leadersPane.setVisible(false);
+        leadersTable.getItems().clear();
+    }
+    @FXML
+    protected void onLeadersButtonClick() throws IOException {
+        out.writeUTF("get_winners");
+        out.flush();
     }
 }

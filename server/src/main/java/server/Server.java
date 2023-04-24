@@ -1,7 +1,9 @@
 package server;
 
 import com.google.gson.Gson;
+import dao.PlayerDAO;
 import entity.*;
+import model.Player;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -30,8 +32,10 @@ public class Server {
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final AtomicBoolean stopAccept = new AtomicBoolean(false);
     private final AtomicInteger startConfirmCount = new AtomicInteger(0);
+    private final PlayerDAO playerDAO;
 
-    public Server() throws IOException {
+    public Server(PlayerDAO playerDAO) throws IOException {
+        this.playerDAO = playerDAO;
         srv = new ServerSocket(port);
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
@@ -77,6 +81,7 @@ public class Server {
 
                     String name = in.readUTF();
                     playersList.players().add(validateName(name));
+                    playersList.wins.add(0);
 
                     out.writeUTF(new Gson().toJson(new Action(Action.Actions.ADD_PLAYERS)));
                     out.flush();
@@ -140,9 +145,19 @@ public class Server {
         for (int i = 0; i < 4; i++) {
             if (scoreCounter[i] >= 3) {
                 winner = playersList.players().get(i);
+                int wins = playersList.wins().get(i);
+                wins++;
+
+                playersList.wins().set(i, wins);
+                playerDAO.setOrUpdate(new Player(winner, wins));
+                break;
             }
         }
         return winner;
+    }
+
+    private PlayersList getWinners() {
+        return new PlayersList(playerDAO.getAll());
     }
 
     private void resetData() {
@@ -160,6 +175,7 @@ public class Server {
 
     private void listenSocket(int num) {
         DataInputStream in = clientSocketsIn.get(num);
+        DataOutputStream out = clientSocketsOut.get(num);
 
         new Thread(() -> {
             while (true) {
@@ -184,6 +200,16 @@ public class Server {
                             if (startConfirmCount.get() == clientSockets.size()) {
                                 isStopped.set(false);
                             }
+                        }
+                        case "get_winners" -> {
+                            PlayersList list = getWinners();
+                            Action action = new Action(Action.Actions.WINNERS);
+
+                            out.writeUTF(new Gson().toJson(action));
+                            out.flush();
+
+                            out.writeUTF(new Gson().toJson(list));
+                            out.flush();
                         }
                     }
                 } catch (IOException e) {

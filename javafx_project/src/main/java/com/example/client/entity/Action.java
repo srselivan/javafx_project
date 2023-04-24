@@ -6,6 +6,7 @@ public class Action {
         ADD_PLAYER,
         END_GAME,
         UPDATE,
+        WINNERS,
     }
 
     public Actions action;
