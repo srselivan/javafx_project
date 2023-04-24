@@ -7,6 +7,7 @@ public class Update {
     public List<Double> targetYCoords;
     public List<Integer> scoreList;
     public List<Integer> shotsList;
+    public List<Integer> wins;
 
     public List<Double> projectileXCoords() {
         return projectileXCoords;
@@ -22,5 +23,9 @@ public class Update {
 
     public List<Integer> shotsList() {
         return shotsList;
+    }
+
+    public List<Integer> wins() {
+        return wins;
     }
 }

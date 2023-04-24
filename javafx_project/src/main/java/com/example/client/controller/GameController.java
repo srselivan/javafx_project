@@ -70,31 +70,6 @@ public class GameController {
         socket = new Socket(host, port);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
-
-//        PlayersList playersList = new PlayersList();
-//        playersList.players = new ArrayList<>();
-//        playersList.wins = new ArrayList<>();
-//        playersList.players().add("aaa");
-//        playersList.players().add("aaa1");
-//        playersList.players().add("aaa2");
-//        playersList.players().add("aaa3");
-//        playersList.wins.add(1);
-//        playersList.wins.add(2);
-//        playersList.wins.add(3);
-//        playersList.wins.add(4);
-//
-//        ObservableList<Player> people = FXCollections.observableArrayList();
-//
-//        for (int i = 0; i < playersList.players().size(); i++) {
-//            people.add(new Player(
-//                    playersList.players().get(i).toString(),
-//                    playersList.wins().get(i)
-//            ));
-//        }
-//
-//        nameColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().name()));
-//        winsColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().winCount()));
-//        leadersTable.setItems(people);
     }
 
     void setLayouts() {
@@ -230,6 +205,7 @@ public class GameController {
                                 HBox hBox = (HBox) scoreOwner.getChildren().get(i);
                                 Label shots = (Label) hBox.getChildren().get(1);
                                 Label score = (Label) hBox.getChildren().get(2);
+                                Label wins = (Label) hBox.getChildren().get(3);
 
                                 int finalI = i;
                                 Platform.runLater(
@@ -239,6 +215,7 @@ public class GameController {
 
                                             shots.setText(update.shotsList.get(finalI).toString());
                                             score.setText(update.scoreList.get(finalI).toString());
+                                            wins.setText(update.wins.get(finalI).toString());
                                         }
                                 );
 
@@ -256,10 +233,15 @@ public class GameController {
                                 ));
                             }
 
-                            nameColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().name()));
-                            winsColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().winCount()));
-                            leadersTable.setItems(observableList);
-                            leadersPane.setVisible(true);
+                            Platform.runLater(
+                                    () -> {
+                                        nameColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().name()));
+                                        winsColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().winCount()));
+                                        leadersTable.setItems(observableList);
+                                        leadersTable.getSortOrder().add(winsColumn);
+                                        leadersPane.setVisible(true);
+                                    }
+                            );
                         }
                     }
                 } catch (IOException ignored) {

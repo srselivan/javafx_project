@@ -67,7 +67,7 @@
             <TableView fx:id="leadersTable" layoutX="94.0" layoutY="60.0" prefHeight="256.0" prefWidth="492.0">
               <columns>
                 <TableColumn fx:id="nameColumn" prefWidth="238.20000457763672" text="name" />
-                <TableColumn fx:id="winsColumn" prefWidth="253.0" text="wins" />
+                <TableColumn fx:id="winsColumn" prefWidth="253.0" sortType="DESCENDING" text="wins" />
               </columns>
             </TableView>
          </children>

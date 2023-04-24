@@ -103,6 +103,12 @@ public class Server {
         }
         acceptConn.interrupt();
         stopAccept.set(true);
+        for (int i = 0; i < playersList.players().size(); i++) {
+            Player player = playerDAO.getByName(playersList.players().get(i).toString());
+            if (player != null) {
+                playersList.wins().set(i, player.winCount());
+            }
+        }
 
         new Thread(()-> {
             setLayouts();
@@ -143,7 +149,7 @@ public class Server {
 
     private String getWinner() {
         for (int i = 0; i < 4; i++) {
-            if (scoreCounter[i] >= 3) {
+            if (scoreCounter[i] >= 1) {
                 winner = playersList.players().get(i);
                 int wins = playersList.wins().get(i);
                 wins++;
@@ -266,6 +272,7 @@ public class Server {
                     update.projectileXCoords.add(projectiles.get(i).x());
                     update.shotsList().add(shotsCounter[i]);
                     update.scoreList().add(scoreCounter[i]);
+                    update.wins().add(playersList.wins().get(i));
                 }
 
                 for(var target : targets) {

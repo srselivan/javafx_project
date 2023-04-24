@@ -8,12 +8,14 @@ public class Update {
     public List<Double> targetYCoords;
     public List<Integer> scoreList;
     public List<Integer> shotsList;
+    public List<Integer> wins;
 
     public Update() {
         this.projectileXCoords = new ArrayList<>(4);
         this.targetYCoords = new ArrayList<>(2);
         this.scoreList = new ArrayList<>(4);
         this.shotsList = new ArrayList<>(4);
+        this.wins = new ArrayList<>(4);
     }
 
     public List<Double> projectileXCoords() {
@@ -30,5 +32,9 @@ public class Update {
 
     public List<Integer> shotsList() {
         return shotsList;
+    }
+
+    public List<Integer> wins() {
+        return wins;
     }
 }
