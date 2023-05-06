@@ -1,12 +1,13 @@
 package com.example.client.controller;
 
+import com.example.client.Application;
 import com.example.client.entity.EventWrapper;
 import com.example.client.entity.PlayersState;
 import com.example.client.entity.GameState;
-import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -60,7 +61,7 @@ public class GameController {
         if (!linesInitialized) {
             setLayouts();
             for (int i = 0; i < playersPane.getChildren().size(); i++) {
-                Line line = ShapesLoader.loadLine("projectile.fxml");
+                Line line = loadRes("projectile.fxml");
                 line.setLayoutY(layouts[i]);
                 line.setLayoutX(96.0);
                 line.setVisible(false);
@@ -152,14 +153,14 @@ public class GameController {
     private void addPlayer() throws IOException {
         String data = in.readUTF();
         PlayersState list = gson.fromJson(data, PlayersState.class);
-        HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+        HBox hBox = loadRes("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
         label.setText(list.getPlayers().get(0));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );
 
-        Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+        Polyline pl = loadRes("player-shape.fxml");
         Platform.runLater(
                 () -> playersPane.getChildren().add(pl)
         );
@@ -169,26 +170,26 @@ public class GameController {
         String data = in.readUTF();
         PlayersState list = gson.fromJson(data, PlayersState.class);
         for (int i = 0; i < list.getPlayers().size() - 1; i++) {
-            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+            HBox hBox = loadRes("player-state.fxml");
             Label label = (Label) hBox.getChildren().get(0);
             label.setText(list.getPlayers().get(i));
             Platform.runLater(
                     () -> scoreOwner.getChildren().add(hBox)
             );
 
-            Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+            Polyline pl = loadRes("player-shape.fxml");
             Platform.runLater(
                     () -> playersPane.getChildren().add(pl)
             );
         }
-        HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+        HBox hBox = loadRes("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
         label.setText(list.getPlayers().get(list.getPlayers().size() - 1));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );
 
-        Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
+        Polyline pl = loadRes("client-player-shape.fxml");
         Platform.runLater(
                 () -> playersPane.getChildren().add(pl)
         );
@@ -215,5 +216,11 @@ public class GameController {
                 layouts[3] = 263;
             }
         }
+    }
+
+    <T> T loadRes(String resourceName) throws IOException {
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(Application.class.getResource(resourceName));
+        return loader.load();
     }
 }
