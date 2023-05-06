@@ -24,14 +24,15 @@ public class Server {
     private final int[] scoreCounter = new int[4];
     private final double[] layouts = new double[4];
     private final PlayersState playersState = new PlayersState();
-    private final ServerSocket srv;
+    private final ServerSocket serverSocket;
+    private static Gson gson = new Gson();
     private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final AtomicBoolean stopAccept = new AtomicBoolean(false);
     private final AtomicInteger startConfirmCount = new AtomicInteger(0);
 
     public Server() throws IOException {
-        srv = new ServerSocket(8080);
+        serverSocket = new ServerSocket(8080);
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
     }
@@ -63,7 +64,7 @@ public class Server {
         Thread acceptConn = new Thread(() -> {
             while (clientSockets.size() < 4) {
                 try {
-                    Socket socket = srv.accept();
+                    Socket socket = serverSocket.accept();
                     if (stopAccept.get()) {
                         break;
                     }
@@ -77,10 +78,10 @@ public class Server {
                     String name = in.readUTF();
                     playersState.getPlayers().add(validateName(name));
 
-                    out.writeUTF(new Gson().toJson(new EventWrapper(EventWrapper.Event.ADD_PLAYERS)));
+                    out.writeUTF(gson.toJson(new EventWrapper(EventWrapper.Event.ADD_PLAYERS)));
                     out.flush();
 
-                    out.writeUTF(new Gson().toJson(playersState));
+                    out.writeUTF(gson.toJson(playersState));
                     out.flush();
 
                     broadcast(new EventWrapper(EventWrapper.Event.ADD_PLAYER));
@@ -200,19 +201,19 @@ public class Server {
                     PlayersState temp = new PlayersState();
                     temp.getPlayers().add(playersState.getPlayers().get(size - 1));
 
-                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(eventWrapper));
+                    clientSocketsOut.get(i).writeUTF(gson.toJson(eventWrapper));
                     clientSocketsOut.get(i).flush();
 
-                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(temp));
+                    clientSocketsOut.get(i).writeUTF(gson.toJson(temp));
                     clientSocketsOut.get(i).flush();
                 }
             }
             case END_GAME -> {
                 for(var out : clientSocketsOut) {
-                    out.writeUTF(new Gson().toJson(eventWrapper));
+                    out.writeUTF(gson.toJson(eventWrapper));
                     out.flush();
 
-                    out.writeUTF(new Gson().toJson(winner));
+                    out.writeUTF(gson.toJson(winner));
                     out.flush();
                 }
                 winner = "";
@@ -245,10 +246,10 @@ public class Server {
                 }
 
                 for(var out : clientSocketsOut) {
-                    out.writeUTF(new Gson().toJson(eventWrapper));
+                    out.writeUTF(gson.toJson(eventWrapper));
                     out.flush();
 
-                    out.writeUTF(new Gson().toJson(gameState));
+                    out.writeUTF(gson.toJson(gameState));
                     out.flush();
                 }
             }
