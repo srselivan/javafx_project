@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 public class Server {
-    private final List<Socket> clientSockets = new ArrayList<>(4);
+    private List<Socket> clientSockets = new ArrayList<>(4);
     private final List<DataInputStream> clientSocketsIn = new ArrayList<>(4);
     private final List<DataOutputStream> clientSocketsOut = new ArrayList<>(4);
     private final List<Projectile> projectiles = new ArrayList<>(4);

@@ -92,7 +92,7 @@ public class GameController {
     }
 
     @FXML
-    protected void  onEnterButtonClick() throws IOException {
+    protected void onEnterButtonClick() throws IOException {
         String name = nameTextField.getText();
         out.writeUTF(name);
         out.flush();
