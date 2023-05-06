@@ -1,6 +1,6 @@
 package com.example.client.controller;
 
-import com.example.client.entity.Action;
+import com.example.client.entity.EventWrapper;
 import com.example.client.entity.PlayersList;
 import com.example.client.entity.Update;
 import com.example.client.service.ShapesLoader;
@@ -20,9 +20,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public class GameController {
     @FXML
@@ -30,38 +27,174 @@ public class GameController {
     @FXML
     private Circle targetSmall;
     @FXML
-    private TextField nameInput;
+    private TextField nameTextField;
     @FXML
-    private Pane signUpPane;
+    private Pane signupPane;
     @FXML
     private Pane winnerPane;
     @FXML
     private Label winnerLabel;
     @FXML
-    private Pane gameOwner;
-    private List<Line> projectileOwner = new ArrayList<>(4);
+    private Pane gamePane;
     @FXML
-    private VBox playersOwner;
+    private VBox playersPane;
     @FXML
     private VBox scoreOwner;
-    private final String host = "localhost";
-    private final int port = 8080;
-    private Socket socket;
+
+    private Line[] projectiles = new Line[4];
     private DataOutputStream out;
     private DataInputStream in;
-    private String name;
     private double[] layouts = new double[4];
-    private boolean wasAdded = false;
+    private boolean linesInitialized = false;
 
     @FXML
     private void initialize() throws IOException {
-        socket = new Socket(host, port);
+        Socket socket = new Socket("localhost", 8080);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
     }
 
+    @FXML
+    protected void onStartButtonClick() throws IOException {
+        if (!linesInitialized) {
+            setLayouts();
+            for (int i = 0; i < playersPane.getChildren().size(); i++) {
+                Line line = ShapesLoader.loadLine("projectile.fxml");
+                line.setLayoutY(layouts[i]);
+                line.setLayoutX(96.0);
+                line.setVisible(false);
+                projectiles[i] = line;
+                gamePane.getChildren().add(line);
+            }
+            linesInitialized = true;
+        }
+        out.writeUTF("start");
+        out.flush();
+    }
+
+    @FXML
+    protected void onStopButtonClick() throws IOException {
+        out.writeUTF("stop");
+        out.flush();
+    }
+
+    @FXML
+    protected void onOkButtonClick() {
+        winnerPane.setVisible(false);
+    }
+
+    @FXML
+    protected void onShotButtonClick() throws IOException {
+        out.writeUTF("shot");
+        out.flush();
+    }
+
+    @FXML
+    protected void onEnterButtonClick() throws IOException {
+        String name = nameTextField.getText();
+        out.writeUTF(name);
+        out.flush();
+
+        new Thread(() -> {
+            while (true) {
+                try {
+                    EventWrapper eventWrapper = new Gson().fromJson(in.readUTF(), EventWrapper.class);
+                    switch (eventWrapper.getEvent()) {
+                        case ADD_PLAYERS -> addPlayers();
+                        case ADD_PLAYER -> addPlayer();
+                        case END_GAME -> endGame();
+                        case UPDATE -> update();
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+        }).start();
+
+        signupPane.setVisible(false);
+    }
+
+    private void update() throws IOException {
+        Update update = new Gson().fromJson(in.readUTF(), Update.class);
+        targetBig.setLayoutY(update.targetYCoords.get(0));
+        targetSmall.setLayoutY(update.targetYCoords.get(1));
+
+        for (int i = 0; i < playersPane.getChildren().size(); i++) {
+            Line l = projectiles[i];
+
+            HBox hBox = (HBox) scoreOwner.getChildren().get(i);
+            Label shots = (Label) hBox.getChildren().get(1);
+            Label score = (Label) hBox.getChildren().get(2);
+
+            int finalI = i;
+            Platform.runLater(
+                    () -> {
+                        l.setVisible(update.projectileXCoords.get(finalI) > 96.0);
+                        l.setLayoutX(update.projectileXCoords.get(finalI));
+
+                        shots.setText(update.shotsList.get(finalI).toString());
+                        score.setText(update.scoreList.get(finalI).toString());
+                    }
+            );
+        }
+    }
+
+    private void endGame() throws IOException {
+        String winner = in.readUTF();
+        Platform.runLater(
+                () -> {
+                    winnerLabel.setText(winner);
+                    winnerPane.setVisible(true);
+                }
+        );
+    }
+
+    private void addPlayer() throws IOException {
+        String data = in.readUTF();
+        PlayersList list = new Gson().fromJson(data, PlayersList.class);
+        HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+        Label label = (Label) hBox.getChildren().get(0);
+        label.setText(list.players().get(0));
+        Platform.runLater(
+                () -> scoreOwner.getChildren().add(hBox)
+        );
+
+        Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+        Platform.runLater(
+                () -> playersPane.getChildren().add(pl)
+        );
+    }
+
+    private void addPlayers() throws IOException {
+        String data = in.readUTF();
+        PlayersList list = new Gson().fromJson(data, PlayersList.class);
+        for (int i = 0; i < list.players().size() - 1; i++) {
+            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+            Label label = (Label) hBox.getChildren().get(0);
+            label.setText(list.players().get(i));
+            Platform.runLater(
+                    () -> scoreOwner.getChildren().add(hBox)
+            );
+
+            Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
+            Platform.runLater(
+                    () -> playersPane.getChildren().add(pl)
+            );
+        }
+        HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
+        Label label = (Label) hBox.getChildren().get(0);
+        label.setText(list.players().get(list.players().size() - 1));
+        Platform.runLater(
+                () -> scoreOwner.getChildren().add(hBox)
+        );
+
+        Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
+        Platform.runLater(
+                () -> playersPane.getChildren().add(pl)
+        );
+    }
+
     void setLayouts() {
-        switch (playersOwner.getChildren().size()) {
+        switch (playersPane.getChildren().size()) {
             case 1 -> {
                 layouts[0] = 153;
             }
@@ -81,138 +214,5 @@ public class GameController {
                 layouts[3] = 263;
             }
         }
-    }
-
-    @FXML
-    protected void onStartButtonClick() throws InterruptedException, IOException {
-        if (!wasAdded) {
-            setLayouts();
-            for (int i = 0; i < playersOwner.getChildren().size(); i++) {
-                Line l = ShapesLoader.loadLine("projectile.fxml");
-                l.setLayoutY(layouts[i]);
-                l.setLayoutX(96.0);
-                l.setVisible(false);
-                projectileOwner.add(l);
-                gameOwner.getChildren().add(l);
-            }
-            wasAdded = true;
-        }
-        out.writeUTF("start");
-        out.flush();
-    }
-
-    @FXML
-    protected void onStopButtonClick() throws IOException {
-        out.writeUTF("stop");
-        out.flush();
-    }
-
-    @FXML
-    protected void onOkButtonClick() throws IOException {
-        winnerPane.setVisible(false);
-    }
-
-    @FXML
-    protected void onShotButtonClick() throws IOException {
-        out.writeUTF("shot");
-        out.flush();
-    }
-
-    @FXML
-    protected void onEnterButtonClick() throws IOException {
-        name = nameInput.getText();
-        out.writeUTF(name);
-        out.flush();
-
-        new Thread(() -> {
-            boolean clientPlayerAdded = false;
-            while (true) {
-                try {
-                    Action action = new Gson().fromJson(in.readUTF(), Action.class);
-                    switch (action.action()) {
-                        case ADD_PLAYERS -> {
-                            String data = in.readUTF();
-                            PlayersList list = new Gson().fromJson(data, PlayersList.class);
-                            for (int i = 0; i < list.players().size() - 1; i++) {
-                                HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
-                                Label label = (Label) hBox.getChildren().get(0);
-                                label.setText(list.players().get(i));
-                                Platform.runLater(
-                                        () -> scoreOwner.getChildren().add(hBox)
-                                );
-
-                                Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
-                                Platform.runLater(
-                                        () -> playersOwner.getChildren().add(pl)
-                                );
-                            }
-                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
-                            Label label = (Label) hBox.getChildren().get(0);
-                            label.setText(list.players().get(list.players().size() - 1));
-                            Platform.runLater(
-                                    () -> scoreOwner.getChildren().add(hBox)
-                            );
-
-                            Polyline pl = ShapesLoader.loadPolyline("client-player-shape.fxml");
-                            Platform.runLater(
-                                    () -> playersOwner.getChildren().add(pl)
-                            );
-                        }
-                        case ADD_PLAYER -> {
-                            String data = in.readUTF();
-                            PlayersList list = new Gson().fromJson(data, PlayersList.class);
-                            HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
-                            Label label = (Label) hBox.getChildren().get(0);
-                            label.setText(list.players().get(0));
-                            Platform.runLater(
-                                    () -> scoreOwner.getChildren().add(hBox)
-                            );
-
-                            Polyline pl = ShapesLoader.loadPolyline("player-shape.fxml");
-                            Platform.runLater(
-                                    () -> playersOwner.getChildren().add(pl)
-                            );
-                        }
-                        case END_GAME -> {
-                            String winner = in.readUTF();
-                            Platform.runLater(
-                                    () -> {
-                                        winnerLabel.setText(winner);
-                                        winnerPane.setVisible(true);
-                                    }
-                            );
-                        }
-                        case UPDATE -> {
-                            Update update = new Gson().fromJson(in.readUTF(), Update.class);
-                            targetBig.setLayoutY(update.targetYCoords.get(0));
-                            targetSmall.setLayoutY(update.targetYCoords.get(1));
-
-                            for (int i = 0; i < playersOwner.getChildren().size(); i++) {
-                                Line l = projectileOwner.get(i);
-
-                                HBox hBox = (HBox) scoreOwner.getChildren().get(i);
-                                Label shots = (Label) hBox.getChildren().get(1);
-                                Label score = (Label) hBox.getChildren().get(2);
-
-                                int finalI = i;
-                                Platform.runLater(
-                                        () -> {
-                                            l.setVisible(update.projectileXCoords.get(finalI) > 96.0);
-                                            l.setLayoutX(update.projectileXCoords.get(finalI));
-
-                                            shots.setText(update.shotsList.get(finalI).toString());
-                                            score.setText(update.scoreList.get(finalI).toString());
-                                        }
-                                );
-
-                            }
-                        }
-                    }
-                } catch (IOException ignored) {
-                }
-            }
-        }).start();
-
-        signUpPane.setVisible(false);
     }
 }
