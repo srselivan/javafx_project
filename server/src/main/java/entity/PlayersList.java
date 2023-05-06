@@ -10,7 +10,7 @@ public class PlayersList {
         players = new ArrayList<>(4);
     }
 
-    public List<String> players() {
+    public List<String> getPlayers() {
         return players;
     }
 }

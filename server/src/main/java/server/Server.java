@@ -76,15 +76,15 @@ public class Server {
                     projectiles.add(new Projectile(535));
 
                     String name = in.readUTF();
-                    playersList.players().add(validateName(name));
+                    playersList.getPlayers().add(validateName(name));
 
-                    out.writeUTF(new Gson().toJson(new Action(Action.Actions.ADD_PLAYERS)));
+                    out.writeUTF(new Gson().toJson(new EventWrapper(EventWrapper.Event.ADD_PLAYERS)));
                     out.flush();
 
                     out.writeUTF(new Gson().toJson(playersList));
                     out.flush();
 
-                    broadcast(new Action(Action.Actions.ADD_PLAYER));
+                    broadcast(new EventWrapper(EventWrapper.Event.ADD_PLAYER));
                     int num = clientSockets.size() - 1;
                     listenSocket(num);
                 } catch (IOException ignored) {
@@ -108,13 +108,13 @@ public class Server {
                     try {
                         if (!Objects.equals(getWinner(), "")) {
                             resetData();
-                            broadcast(new Action(Action.Actions.UPDATE));
-                            broadcast(new Action(Action.Actions.END_GAME));
+                            broadcast(new EventWrapper(EventWrapper.Event.UPDATE));
+                            broadcast(new EventWrapper(EventWrapper.Event.END_GAME));
                             isStopped.set(true);
                             startConfirmCount.set(0);
                             continue;
                         }
-                        broadcast(new Action(Action.Actions.UPDATE));
+                        broadcast(new EventWrapper(EventWrapper.Event.UPDATE));
                         Thread.sleep(30);
                     } catch (IOException | InterruptedException e) {
                         throw new RuntimeException(e);
@@ -128,7 +128,7 @@ public class Server {
         String tmp = name;
         int counter = 0;
         while (true) {
-            if (playersList.players().contains(tmp)) {
+            if (playersList.getPlayers().contains(tmp)) {
                 tmp += Integer.toString(counter++);
             } else {
                 return tmp;
@@ -139,7 +139,7 @@ public class Server {
     private String getWinner() {
         for (int i = 0; i < 4; i++) {
             if (scoreCounter[i] >= 3) {
-                winner = playersList.players().get(i);
+                winner = playersList.getPlayers().get(i);
             }
         }
         return winner;
@@ -193,15 +193,15 @@ public class Server {
         }).start();
     }
 
-    private void broadcast(Action action) throws IOException {
-        switch (action.action()) {
+    private void broadcast(EventWrapper eventWrapper) throws IOException {
+        switch (eventWrapper.getEvent()) {
             case ADD_PLAYER -> {
                 for (int i = 0; i < clientSocketsOut.size() - 1 ; i++) {
-                    int size = playersList.players().size();
+                    int size = playersList.getPlayers().size();
                     PlayersList temp = new PlayersList();
-                    temp.players().add(playersList.players().get(size - 1));
+                    temp.getPlayers().add(playersList.getPlayers().get(size - 1));
 
-                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(action));
+                    clientSocketsOut.get(i).writeUTF(new Gson().toJson(eventWrapper));
                     clientSocketsOut.get(i).flush();
 
                     clientSocketsOut.get(i).writeUTF(new Gson().toJson(temp));
@@ -210,7 +210,7 @@ public class Server {
             }
             case END_GAME -> {
                 for(var out : clientSocketsOut) {
-                    out.writeUTF(new Gson().toJson(action));
+                    out.writeUTF(new Gson().toJson(eventWrapper));
                     out.flush();
 
                     out.writeUTF(new Gson().toJson(winner));
@@ -246,7 +246,7 @@ public class Server {
                 }
 
                 for(var out : clientSocketsOut) {
-                    out.writeUTF(new Gson().toJson(action));
+                    out.writeUTF(new Gson().toJson(eventWrapper));
                     out.flush();
 
                     out.writeUTF(new Gson().toJson(update));

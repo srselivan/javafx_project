@@ -16,14 +16,6 @@ public class Update {
         this.shotsList = new ArrayList<>(4);
     }
 
-    public List<Double> projectileXCoords() {
-        return projectileXCoords;
-    }
-
-    public List<Double> targetYCoords() {
-        return targetYCoords;
-    }
-
     public List<Integer> scoreList() {
         return scoreList;
     }
