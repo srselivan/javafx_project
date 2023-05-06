@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 public class Server {
-    private static final int port = 8080;
     private final List<Socket> clientSockets = new ArrayList<>(4);
     private final List<DataInputStream> clientSocketsIn = new ArrayList<>(4);
     private final List<DataOutputStream> clientSocketsOut = new ArrayList<>(4);
@@ -32,7 +31,7 @@ public class Server {
     private final AtomicInteger startConfirmCount = new AtomicInteger(0);
 
     public Server() throws IOException {
-        srv = new ServerSocket(port);
+        srv = new ServerSocket(8080);
         targets.add(new Target(5, 20, 446));
         targets.add(new Target(10, 10, 500));
     }
@@ -60,7 +59,7 @@ public class Server {
         }
     }
 
-    public void start() throws InterruptedException {
+    public void start() {
         Thread acceptConn = new Thread(() -> {
             while (clientSockets.size() < 4) {
                 try {
@@ -138,7 +137,7 @@ public class Server {
 
     private String getWinner() {
         for (int i = 0; i < 4; i++) {
-            if (scoreCounter[i] >= 3) {
+            if (scoreCounter[i] >= 2) {
                 winner = playersState.getPlayers().get(i);
             }
         }

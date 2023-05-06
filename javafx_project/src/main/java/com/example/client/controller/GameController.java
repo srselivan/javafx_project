@@ -2,8 +2,8 @@ package com.example.client.controller;
 
 import com.example.client.Application;
 import com.example.client.entity.EventWrapper;
-import com.example.client.entity.PlayersState;
 import com.example.client.entity.GameState;
+import com.example.client.entity.PlayersState;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -105,7 +105,7 @@ public class GameController {
                         case ADD_PLAYERS -> addPlayers();
                         case ADD_PLAYER -> addPlayer();
                         case END_GAME -> endGame();
-                        case UPDATE -> update();
+                        case UPDATE -> updateGameState();
                     }
                 } catch (IOException ignored) {
                 }
@@ -115,13 +115,13 @@ public class GameController {
         signupPane.setVisible(false);
     }
 
-    private void update() throws IOException {
+    private void updateGameState() throws IOException {
         GameState gameState = gson.fromJson(in.readUTF(), GameState.class);
         targetBig.setLayoutY(gameState.targetYCoords.get(0));
         targetSmall.setLayoutY(gameState.targetYCoords.get(1));
 
         for (int i = 0; i < playersPane.getChildren().size(); i++) {
-            Line l = projectiles[i];
+            Line line = projectiles[i];
 
             HBox hBox = (HBox) scoreOwner.getChildren().get(i);
             Label shots = (Label) hBox.getChildren().get(1);
@@ -130,11 +130,11 @@ public class GameController {
             int finalI = i;
             Platform.runLater(
                     () -> {
-                        l.setVisible(gameState.projectileXCoords.get(finalI) > 96.0);
-                        l.setLayoutX(gameState.projectileXCoords.get(finalI));
+                        line.setVisible(gameState.projectileXCoords.get(finalI) > 96.0);
+                        line.setLayoutX(gameState.projectileXCoords.get(finalI));
 
-                        shots.setText(gameState.shotsList.get(finalI).toString());
-                        score.setText(gameState.scoreList.get(finalI).toString());
+                        shots.setText("Выстрелов " + gameState.shotsList.get(finalI).toString());
+                        score.setText("Попадания " + gameState.scoreList.get(finalI).toString());
                     }
             );
         }
@@ -155,7 +155,7 @@ public class GameController {
         PlayersState list = gson.fromJson(data, PlayersState.class);
         HBox hBox = loadRes("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
-        label.setText(list.getPlayers().get(0));
+        label.setText("Игрок " + list.getPlayers().get(0));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );
@@ -172,7 +172,7 @@ public class GameController {
         for (int i = 0; i < list.getPlayers().size() - 1; i++) {
             HBox hBox = loadRes("player-state.fxml");
             Label label = (Label) hBox.getChildren().get(0);
-            label.setText(list.getPlayers().get(i));
+            label.setText("Игрок " + list.getPlayers().get(i));
             Platform.runLater(
                     () -> scoreOwner.getChildren().add(hBox)
             );
@@ -184,7 +184,7 @@ public class GameController {
         }
         HBox hBox = loadRes("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
-        label.setText(list.getPlayers().get(list.getPlayers().size() - 1));
+        label.setText("Игрок " + list.getPlayers().get(list.getPlayers().size() - 1));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );
