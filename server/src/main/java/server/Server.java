@@ -24,7 +24,7 @@ public class Server {
     private final int[] shotsCounter = new int[4];
     private final int[] scoreCounter = new int[4];
     private final double[] layouts = new double[4];
-    private final PlayersList playersList = new PlayersList();
+    private final PlayersState playersState = new PlayersState();
     private final ServerSocket srv;
     private String winner = "";
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
@@ -76,12 +76,12 @@ public class Server {
                     projectiles.add(new Projectile(535));
 
                     String name = in.readUTF();
-                    playersList.getPlayers().add(validateName(name));
+                    playersState.getPlayers().add(validateName(name));
 
                     out.writeUTF(new Gson().toJson(new EventWrapper(EventWrapper.Event.ADD_PLAYERS)));
                     out.flush();
 
-                    out.writeUTF(new Gson().toJson(playersList));
+                    out.writeUTF(new Gson().toJson(playersState));
                     out.flush();
 
                     broadcast(new EventWrapper(EventWrapper.Event.ADD_PLAYER));
@@ -128,7 +128,7 @@ public class Server {
         String tmp = name;
         int counter = 0;
         while (true) {
-            if (playersList.getPlayers().contains(tmp)) {
+            if (playersState.getPlayers().contains(tmp)) {
                 tmp += Integer.toString(counter++);
             } else {
                 return tmp;
@@ -139,7 +139,7 @@ public class Server {
     private String getWinner() {
         for (int i = 0; i < 4; i++) {
             if (scoreCounter[i] >= 3) {
-                winner = playersList.getPlayers().get(i);
+                winner = playersState.getPlayers().get(i);
             }
         }
         return winner;
@@ -197,9 +197,9 @@ public class Server {
         switch (eventWrapper.getEvent()) {
             case ADD_PLAYER -> {
                 for (int i = 0; i < clientSocketsOut.size() - 1 ; i++) {
-                    int size = playersList.getPlayers().size();
-                    PlayersList temp = new PlayersList();
-                    temp.getPlayers().add(playersList.getPlayers().get(size - 1));
+                    int size = playersState.getPlayers().size();
+                    PlayersState temp = new PlayersState();
+                    temp.getPlayers().add(playersState.getPlayers().get(size - 1));
 
                     clientSocketsOut.get(i).writeUTF(new Gson().toJson(eventWrapper));
                     clientSocketsOut.get(i).flush();
@@ -219,7 +219,7 @@ public class Server {
                 winner = "";
             }
             case UPDATE -> {
-                Update update = new Update();
+                GameState gameState = new GameState();
                 for (int i = 0; i < clientSockets.size(); i++) {
                     if (shotsHandler[i]){
                         if (!projectiles.get(i).isEnd()){
@@ -236,20 +236,20 @@ public class Server {
                             shotsHandler[i] = false;
                         }
                     }
-                    update.projectileXCoords.add(projectiles.get(i).x());
-                    update.shotsList().add(shotsCounter[i]);
-                    update.scoreList().add(scoreCounter[i]);
+                    gameState.projectileXCoords.add(projectiles.get(i).x());
+                    gameState.shotsList().add(shotsCounter[i]);
+                    gameState.scoreList().add(scoreCounter[i]);
                 }
 
                 for(var target : targets) {
-                    update.targetYCoords.add(target.move());
+                    gameState.targetYCoords.add(target.move());
                 }
 
                 for(var out : clientSocketsOut) {
                     out.writeUTF(new Gson().toJson(eventWrapper));
                     out.flush();
 
-                    out.writeUTF(new Gson().toJson(update));
+                    out.writeUTF(new Gson().toJson(gameState));
                     out.flush();
                 }
             }

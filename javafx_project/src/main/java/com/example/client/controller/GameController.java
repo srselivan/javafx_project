@@ -1,8 +1,8 @@
 package com.example.client.controller;
 
 import com.example.client.entity.EventWrapper;
-import com.example.client.entity.PlayersList;
-import com.example.client.entity.Update;
+import com.example.client.entity.PlayersState;
+import com.example.client.entity.GameState;
 import com.example.client.service.ShapesLoader;
 import com.google.gson.Gson;
 import javafx.application.Platform;
@@ -40,6 +40,7 @@ public class GameController {
     private VBox playersPane;
     @FXML
     private VBox scoreOwner;
+    private static Gson gson = new Gson();
 
     private Line[] projectiles = new Line[4];
     private DataOutputStream out;
@@ -98,7 +99,7 @@ public class GameController {
         new Thread(() -> {
             while (true) {
                 try {
-                    EventWrapper eventWrapper = new Gson().fromJson(in.readUTF(), EventWrapper.class);
+                    EventWrapper eventWrapper = gson.fromJson(in.readUTF(), EventWrapper.class);
                     switch (eventWrapper.getEvent()) {
                         case ADD_PLAYERS -> addPlayers();
                         case ADD_PLAYER -> addPlayer();
@@ -114,9 +115,9 @@ public class GameController {
     }
 
     private void update() throws IOException {
-        Update update = new Gson().fromJson(in.readUTF(), Update.class);
-        targetBig.setLayoutY(update.targetYCoords.get(0));
-        targetSmall.setLayoutY(update.targetYCoords.get(1));
+        GameState gameState = gson.fromJson(in.readUTF(), GameState.class);
+        targetBig.setLayoutY(gameState.targetYCoords.get(0));
+        targetSmall.setLayoutY(gameState.targetYCoords.get(1));
 
         for (int i = 0; i < playersPane.getChildren().size(); i++) {
             Line l = projectiles[i];
@@ -128,11 +129,11 @@ public class GameController {
             int finalI = i;
             Platform.runLater(
                     () -> {
-                        l.setVisible(update.projectileXCoords.get(finalI) > 96.0);
-                        l.setLayoutX(update.projectileXCoords.get(finalI));
+                        l.setVisible(gameState.projectileXCoords.get(finalI) > 96.0);
+                        l.setLayoutX(gameState.projectileXCoords.get(finalI));
 
-                        shots.setText(update.shotsList.get(finalI).toString());
-                        score.setText(update.scoreList.get(finalI).toString());
+                        shots.setText(gameState.shotsList.get(finalI).toString());
+                        score.setText(gameState.scoreList.get(finalI).toString());
                     }
             );
         }
@@ -150,10 +151,10 @@ public class GameController {
 
     private void addPlayer() throws IOException {
         String data = in.readUTF();
-        PlayersList list = new Gson().fromJson(data, PlayersList.class);
+        PlayersState list = gson.fromJson(data, PlayersState.class);
         HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
-        label.setText(list.players().get(0));
+        label.setText(list.getPlayers().get(0));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );
@@ -166,11 +167,11 @@ public class GameController {
 
     private void addPlayers() throws IOException {
         String data = in.readUTF();
-        PlayersList list = new Gson().fromJson(data, PlayersList.class);
-        for (int i = 0; i < list.players().size() - 1; i++) {
+        PlayersState list = gson.fromJson(data, PlayersState.class);
+        for (int i = 0; i < list.getPlayers().size() - 1; i++) {
             HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
             Label label = (Label) hBox.getChildren().get(0);
-            label.setText(list.players().get(i));
+            label.setText(list.getPlayers().get(i));
             Platform.runLater(
                     () -> scoreOwner.getChildren().add(hBox)
             );
@@ -182,7 +183,7 @@ public class GameController {
         }
         HBox hBox = ShapesLoader.loadHBox("player-state.fxml");
         Label label = (Label) hBox.getChildren().get(0);
-        label.setText(list.players().get(list.players().size() - 1));
+        label.setText(list.getPlayers().get(list.getPlayers().size() - 1));
         Platform.runLater(
                 () -> scoreOwner.getChildren().add(hBox)
         );

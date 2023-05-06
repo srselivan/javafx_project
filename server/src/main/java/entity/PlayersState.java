@@ -3,10 +3,10 @@ package entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlayersList {
+public class PlayersState {
     public List<String> players;
 
-    public PlayersList() {
+    public PlayersState() {
         players = new ArrayList<>(4);
     }
 
